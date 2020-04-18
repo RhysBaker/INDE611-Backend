@@ -14,7 +14,7 @@ app.post('/sketch', FBAuth, postSketch);
 //user routes
 app.post('/signup', signup);
 app.post('/login', login);
-app.post('/user/image', uploadImage);
+app.post('/user/image', FBAuth, uploadImage);
 
 
 exports.api = functions.region('europe-west1').https.onRequest(app);

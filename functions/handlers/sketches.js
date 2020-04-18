@@ -8,7 +8,7 @@ exports.getAllSketches = (req, res) => {
             let sketches = [];
             data.forEach((doc) => {
                 sketches.push({
-                    screamID: doc.id,
+                    sketchID: doc.id,
                     body: doc.data().body,
                     userHandle: doc.data().userHandle,
                     createdAt: doc.data().createdAt
