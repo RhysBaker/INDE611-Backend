@@ -4,17 +4,17 @@ const app = require('express')();
 
 const FBAuth = require('./util/FBAuth');
 
-const { getAllSketches, postSketch, getSketch, commentOnSketch } = require('./handlers/sketches');
+const { getAllSketches, postSketch, getSketch, commentOnSketch, likeSketch, unlikeSketch, deleteSketch } = require('./handlers/sketches');
 const { signup, login, uploadImage, addUserDetails, getAuthenticatedUser } = require('./handlers/user');
 
 //sketch route
 app.get('/sketches', getAllSketches);
 app.post('/sketch', FBAuth, postSketch);
 app.get('/sketch/:sketchId', getSketch);
-//TODO: Delete sketch
-// TODO: Like a sketch
-// TODO: unlike sketch
-app.post('/sketch/:sketchId/comment', FBAuth, commentOnSketch)
+app.delete('/sketch/:sketchId', FBAuth, deleteSketch)
+app.get('/sketch/:sketchId/like', FBAuth, likeSketch);
+app.get('/sketch/:sketchId/unlike', FBAuth, unlikeSketch);
+app.post('/sketch/:sketchId/comment', FBAuth, commentOnSketch);
 
 //user routes
 app.post('/signup', signup);
