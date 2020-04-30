@@ -105,29 +105,90 @@ exports.addUserDetails = (req, res) => {
         })
 }
 
-
-//get own user details
-exports.getAuthenticatedUser = (req, res) => {
+// Get any user's details
+exports.getUserDetails = (req, res) => {
     let userData = {};
-    db.doc(`/users/${req.user.handle}`).get()
-        .then(doc => {
+    db.doc(`/users/${req.params.handle}`)
+        .get()
+        .then((doc) => {
             if (doc.exists) {
-                userData.credentials = doc.data();
-                return db.collection('likes').where('userHandle', '==', req.user.handle).get()
+                userData.user = doc.data();
+                return db
+                    .collection("sketches")
+                    .where("userHandle", "==", req.params.handle)
+                    .orderBy("createdAt", "desc")
+                    .get();
+            } else {
+                return res.status(404).json({ errror: "User not found" });
             }
         })
-        .then(data => {
-            userData.likes = []
-            data.forEach(doc => {
-                userData.likes.push(doc.data());
+        .then((data) => {
+            userData.sketches = [];
+            data.forEach((doc) => {
+                userData.sketches.push({
+                    body: doc.data().body,
+                    createdAt: doc.data().createdAt,
+                    userHandle: doc.data().userHandle,
+                    userImage: doc.data().userImage,
+                    likeCount: doc.data().likeCount,
+                    commentCount: doc.data().commentCount,
+                    sketchId: doc.id,
+                });
             });
             return res.json(userData);
         })
-        .catch(err => {
-            console.error(err)
-            return res.status(500).json({ message: err.code });
+        .catch((err) => {
+            console.error(err);
+            return res.status(500).json({ error: err.code });
         });
-}
+};
+
+
+exports.getAuthenticatedUser = (req, res) => {
+    let userData = {};
+    db.doc(`/users/${req.user.handle}`)
+        .get()
+        .then((doc) => {
+            if (doc.exists) {
+                userData.credentials = doc.data();
+                return db
+                    .collection("likes")
+                    .where("userHandle", "==", req.user.handle)
+                    .get();
+            }
+        })
+        .then((data) => {
+            userData.likes = [];
+            data.forEach((doc) => {
+                userData.likes.push(doc.data());
+            });
+            return db
+                .collection("notifications")
+                .where("recipient", "==", req.user.handle)
+                .orderBy("createdAt", "desc")
+                .limit(10)
+                .get();
+        })
+        .then((data) => {
+            userData.notifications = [];
+            data.forEach((doc) => {
+                userData.notifications.push({
+                    recipient: doc.data().recipient,
+                    sender: doc.data().sender,
+                    createdAt: doc.data().createdAt,
+                    sketchId: doc.data().sketchId,
+                    type: doc.data().type,
+                    read: doc.data().read,
+                    notificationId: doc.id,
+                });
+            });
+            return res.json(userData);
+        })
+        .catch((err) => {
+            console.error(err);
+            return res.status(500).json({ error: err.code });
+        });
+};
 
 // Upload a profile image for user
 exports.uploadImage = (req, res) => {
@@ -179,4 +240,22 @@ exports.uploadImage = (req, res) => {
             });
     });
     busboy.end(req.rawBody);
+};
+
+
+exports.markNotificationsRead = (req, res) => {
+    let batch = db.batch();
+    req.body.forEach((notificationId) => {
+        const notification = db.doc(`/notifications/${notificationId}`);
+        batch.update(notification, { read: true });
+    });
+    batch
+        .commit()
+        .then(() => {
+            return res.json({ message: "Notifications marked read" });
+        })
+        .catch((err) => {
+            console.error(err);
+            return res.status(500).json({ error: err.code });
+        });
 };
