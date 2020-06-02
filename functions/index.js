@@ -2,6 +2,8 @@ const functions = require("firebase-functions");
 const app = require("express")();
 const { db } = require("./util/admin");
 const FBAuth = require("./util/FBAuth");
+const cors = require("cors");
+app.use(cors());
 
 const {
   getAllSketches,
@@ -11,6 +13,7 @@ const {
   likeSketch,
   unlikeSketch,
   deleteSketch,
+  uploadSketchImage,
 } = require("./handlers/sketches");
 const {
   signup,
@@ -30,6 +33,7 @@ app.delete("/sketch/:sketchId", FBAuth, deleteSketch);
 app.get("/sketch/:sketchId/like", FBAuth, likeSketch);
 app.get("/sketch/:sketchId/unlike", FBAuth, unlikeSketch);
 app.post("/sketch/:sketchId/comment", FBAuth, commentOnSketch);
+app.post("/sketch/:sketchId/image", FBAuth, uploadSketchImage);
 
 //user routes
 app.post("/signup", signup);
